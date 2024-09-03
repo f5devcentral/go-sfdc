@@ -20,6 +20,7 @@ func mockJWTRetriveReader(creds JwtCredentials) io.Reader {
 
 	return strings.NewReader(form.Encode())
 }
+
 func Test_jwtProvider_Retrieve(t *testing.T) {
 
 	pemData := []byte(SampleKey)
@@ -27,7 +28,8 @@ func Test_jwtProvider_Retrieve(t *testing.T) {
 	signKey, _ := jwt.ParseRSAPrivateKeyFromPEM(pemData)
 
 	type fields struct {
-		creds JwtCredentials
+		creds          JwtCredentials
+		expirationTime int64
 	}
 	tests := []struct {
 		name    string
@@ -37,16 +39,31 @@ func Test_jwtProvider_Retrieve(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{
-			name: "Token Retriever",
+			name: "Token Retriever w/ Time 1",
 			fields: fields{
 				creds: JwtCredentials{
-					URL:          "http://test.password.session",
-					ClientId:     "12345",
-					ClientUsername:     "myusername",
-					ClientKey: signKey,
+					URL:            "http://test.password.session",
+					ClientId:       "12345",
+					ClientUsername: "myusername",
+					ClientKey:      signKey,
 				},
+				expirationTime: int64(1724867175), // for 2024-08-28 10:46:15 -0700 PDT
 			},
-			want: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwOi8vdGVzdC5wYXNzd29yZC5zZXNzaW9uIiwiZXhwIjoxMjMyMTMsImlzcyI6IjEyMzQ1Iiwic3ViIjoibXl1c2VybmFtZSJ9.rMwIVIG9IEHuZ9O5Na3VZHCRTw0z7iBRugWPlZeq6VFjcrHimDvBxN91DQtQcOqULSORWvo0HGzEHo_LOnMopj6dyL-wxgEp3Fu9owv-69HNP_uYYfy0_W93-1BVlOgCGuF6NdP2JHb3EsUmEPf-DJcjYmiymUMrMV6vNhkbl3eb_V93xA4-sid4reyMyBDVznKqyrQOOiyEqEq3tF9IZKcu7Cr1KDJa2br8S9Rq_xwv6PZPm4Pm97Bpd5t95Fo6zyTIOLu-zaXRzwKBRF6StuXsisfXo66-jDnSs0R-fx_RaI6GRez900lEzqZK13ggsLmB3PqpNcZkWvKvExBSHg",
+			want: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiaHR0cDovL3Rlc3QucGFzc3dvcmQuc2Vzc2lvbiJdLCJleHAiOjE3MjQ4NjcxNzUsImlzcyI6IjEyMzQ1Iiwic3ViIjoibXl1c2VybmFtZSJ9.ih_K4b8z3Eb8cIA6wxbVk1r1TNhLcfXbqoBgmBdotDD1bB7crCx8fogPWv3dSMsmiPD8CRs4pb5RRdfN4bczTOG5A3hfgCOe78WilROLnT82ndYePZNAZDT5-ODVO5hgGYsz2jeHC6gPyEmau0VXzE0v8LKNZvc1siiG3NX4bSEnAmK60Pt-JXwuKm6tz7lS3KXUOxQ8Ku_1-0mrYHWQv7_r-0u37cL0D6ccMifeGYIIDYLsa1p_dU4ETHAdUlqYGvYkyA_OoadL6Tf3zpsxzFWjFsoDY4ASwRi93NhcAUpexW6xgl4L3ogMyxFng3Ggi49ptTxCsgLJIOyCWKZlUg",
+			wantErr: false,
+		},
+		{
+			name: "Token Retriever w/ Time 2",
+			fields: fields{
+				creds: JwtCredentials{
+					URL:            "http://test.password.session",
+					ClientId:       "12345",
+					ClientUsername: "myusername",
+					ClientKey:      signKey,
+				},
+				expirationTime: int64(1724867449), // for 2024-08-28 10:50:49 -0700 PDT
+			},
+			want: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiaHR0cDovL3Rlc3QucGFzc3dvcmQuc2Vzc2lvbiJdLCJleHAiOjE3MjQ4Njc0NDksImlzcyI6IjEyMzQ1Iiwic3ViIjoibXl1c2VybmFtZSJ9.sGgac60nELTuSPgtnb1yLla094TAtg_uI5FJJ0qObl0ETs_fdAVcyUtlTJKWIBlTIbogM-eOFHqTo7b68Ug1JcC0yWpQ88iEwbmHJcVx4DVT1D50zIZ7ljKRjfaM95LMdcI8g-102dfJ54SmhXU5pv9xucDfjL4CzeTWiWab3rht_X8UH7Sa0fSOP5lnC5bbMPsfPlMCObg0UYJW1s8ytV3w-mgdGQeJWPYJbTFLPiwUQtuwOtoD3yC9w9GDiwlnrDO0aoB8PrhUwsOrqUuRau8zl4MJeehYgvqGx6X1toKAwnsvsDM40OR_LQ31SIH8aLJQqSW_hMEGBgR6f07fhg",
 			wantErr: false,
 		},
 	}
@@ -55,7 +72,7 @@ func Test_jwtProvider_Retrieve(t *testing.T) {
 			provider := &jwtProvider{
 				creds: tt.fields.creds,
 			}
-			token, err := provider.BuildClaimsToken(123213, provider.creds.URL, provider.creds.ClientId, provider.creds.ClientUsername)
+			token, err := provider.BuildClaimsToken(tt.fields.expirationTime, provider.creds.URL, provider.creds.ClientId, provider.creds.ClientUsername)
 
 			if err != nil && !tt.wantErr {
 				t.Error()

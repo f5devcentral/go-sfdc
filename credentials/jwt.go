@@ -49,8 +49,8 @@ func (provider *jwtProvider) BuildClaimsToken(expirationTime int64, url string, 
 	claims := &claims{
 		StandardClaims: jwt.StandardClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
-			ExpiresAt: expirationTime,
-			Audience:  url,                  // "https://test.salesforce.com" || "https://login.salesforce.com"
+			ExpiresAt: jwt.NewTime(float64(expirationTime)),
+			Audience:  jwt.ClaimStrings{url},                  // "https://test.salesforce.com" || "https://login.salesforce.com"
 			Issuer:    clientId, // consumer key of the connected app, hardcoded
 			Subject:   clientUsername,                       // username of the salesforce user, whose profile is added to the connected app
 		},
