@@ -2,11 +2,12 @@ package credentials
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"io"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/dgrijalva/jwt-go/v4"
 )
 
 const (
